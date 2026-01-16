@@ -49,7 +49,7 @@ async def send_to_webhook(message_text: str, user_id: int) -> str:
                     # Можно прочитать текст ошибки для отладки
                     error_text = await response.text()
                     logger.error(f"Server response: {error_text}")
-                    return "Извините, произошла ошибка на сервере обработки."
+                    return "Извините, произошла ошибка на сервере обработки"
     except Exception as e:
         logger.error(f"Error sending to webhook: {e}")
         return "Извините, не удалось связаться с сервером."
