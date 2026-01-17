@@ -192,3 +192,23 @@ async def update_user_metadata(
         new_metadata = {**user.extra_data, **extra_data}
         return await update_user(session, telegram_id, extra_data=new_metadata)
     return None
+
+
+async def update_user_phone(
+    session: AsyncSession,
+    telegram_id: int,
+    phone: str
+) -> Optional[User]:
+    """
+    Обновить номер телефона пользователя
+
+    Args:
+        session: Асинхронная сессия БД
+        telegram_id: Telegram ID пользователя
+        phone: Номер телефона
+
+    Returns:
+        Обновленный объект User или None
+    """
+    return await update_user(session, telegram_id, phone=phone)
+
