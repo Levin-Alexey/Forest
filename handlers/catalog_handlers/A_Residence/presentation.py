@@ -5,7 +5,7 @@ from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from crud import update_user_phone
+from crud import update_user_phone, get_user
 from database import get_session
 
 router = Router()
@@ -35,8 +35,25 @@ def get_phone_keyboard() -> ReplyKeyboardMarkup:
 async def a_presentation_handler(callback: CallbackQuery, state: FSMContext):
     """
     Обработчик кнопки "Получить презентацию" для резиденции А
+    Проверяет наличие номера телефона в БД
     """
     await callback.answer()
+    user_id = callback.from_user.id
+
+    # Получаем пользователя из БД
+    async for session in get_session():
+        user = await get_user(session, user_id)
+
+        # Если номер телефона уже есть - отправляем ссылку
+        if user and user.phone:
+            await callback.message.answer(
+                f"✅ Номер телефона найден: {user.phone}\n\n"
+                f"📄 Вот ссылка на презентацию резиденции:\n"
+                f"{PRESENTATION_URL}"
+            )
+            return
+
+    # Номера телефона нет - запрашиваем контакт
     await state.set_state(PresentationStates.waiting_for_contact)
     await callback.message.answer(
         "📊 <b>Презентация Резиденции А</b>\n\n"
