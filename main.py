@@ -14,6 +14,7 @@ from crud import get_or_create_user
 
 # Импорт клавиатур и обработчиков
 from keyboards import get_main_menu_keyboard
+from handlers.ai_consultant import AIConsultantStates, send_to_webhook
 from handlers import (
     ai_consultant_router,
     about_project_router,
@@ -90,6 +91,27 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
         caption="Я виртуальный помощник. Выберете пункт меню",
         reply_markup=get_main_menu_keyboard()
     )
+
+
+# Обработчик для сообщений в режиме AI консультанта
+# ВАЖНО: Должен быть ДО fallback обработчика text_message_handler
+@dp.message(AIConsultantStates.chatting, F.text)
+async def ai_chat_handler(message: Message) -> None:
+    """
+    Обработчик сообщений когда пользователь в режиме AI консультанта
+    Отправляет сообщение в N8N и возвращает ответ
+    """
+    user_message = message.text
+    user_id = message.from_user.id
+
+    # Показываем статус "печатает...", пока ждем ответ
+    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
+
+    # Отправляем сообщение в N8N и получаем ответ
+    response = await send_to_webhook(user_message, user_id)
+
+    # Отправляем ответ пользователю
+    await message.answer(response)
 
 
 # ВАЖНО: Этот обработчик должен быть ПОСЛЕДНИМ!

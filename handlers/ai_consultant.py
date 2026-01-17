@@ -80,22 +80,4 @@ async def ai_consultant_handler(callback: CallbackQuery, state: FSMContext):
     )
 
 
-@router.message(AIConsultantStates.chatting, F.text)
-async def ai_chat_handler(message: Message, state: FSMContext):
-    """
-    Обработчик сообщений в режиме чата с AI консультантом
-    Отправляет сообщения пользователя в N8N и возвращает ответы
-    """
-    user_message = message.text
-    user_id = message.from_user.id
-
-    # Показываем статус "печатает...", пока ждем ответ
-    await message.bot.send_chat_action(chat_id=message.chat.id, action="typing")
-
-    # Отправляем сообщение в N8N и получаем ответ
-    response = await send_to_webhook(user_message, user_id)
-
-    # Отправляем ответ пользователю
-    await message.answer(response)
-
 
