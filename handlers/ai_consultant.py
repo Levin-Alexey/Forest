@@ -7,7 +7,7 @@ AI работает только когда пользователь актив�
 import os
 import logging
 import aiohttp
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.types import CallbackQuery, Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -80,4 +80,17 @@ async def ai_consultant_handler(callback: CallbackQuery, state: FSMContext):
     )
 
 
+@router.message(AIConsultantStates.chatting)
+async def ai_chat_handler(message: Message, state: FSMContext):
+    """
+    Обработчик сообщений в режиме AI консультанта
+    """
+    # Отправляем сообщение на webhook и получаем ответ
+    response = await send_to_webhook(message.text, message.from_user.id)
 
+    # Проверяем, что ответ не пустой (защита от падения бота)
+    if response and response.strip():
+        await message.answer(response)
+    else:
+        logger.error(f"Empty response from webhook for user {message.from_user.id}")
+        await message.answer("Извините, не удалось получить ответ. Попробуйте позже или переформулируйте вопрос.")
