@@ -40,7 +40,7 @@ START_IMAGE_URL = "https://optim.tildacdn.com/tild3535-3863-4331-b136-3966323935
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
-# Подключаем роутеры обработчиков
+# Подключаем роутеры обработчиков (ВАЖНО: ai_consultant_router первым!)
 dp.include_router(ai_consultant_router)
 dp.include_router(about_project_router)
 dp.include_router(catalog_router)
@@ -92,11 +92,18 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     )
 
 
+# ВАЖНО: Этот обработчик должен быть ПОСЛЕДНИМ!
+# Он ловит только сообщения БЕЗ активного FSM состояния
 @dp.message(F.text)
 async def text_message_handler(message: Message) -> None:
     """
-    Обработчик всех текстовых сообщений
+    Обработчик всех текстовых сообщений (fallback)
     Защита от сообщений в чат - направляем пользователя к использованию AI консультанта
+
+    Этот обработчик срабатывает только если:
+    - Пользователь НЕ в состоянии AIConsultantStates.chatting
+    - Пользователь НЕ заполняет другую форму
+    - Нет других более специфичных обработчиков
     """
     await message.answer(
         "💬 Для общения с AI консультантом перейдите в нужный раздел",
