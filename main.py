@@ -215,6 +215,22 @@ async def command_start_handler(message: Message, state: FSMContext) -> None:
     )
 
 
+@dp.message(F.text == "/chat")
+async def command_chat_handler(message: Message, state: FSMContext) -> None:
+    """
+    Обработчик команды /chat
+    Активирует AI консультанта так же, как кнопка "AI консультант"
+    """
+    # Переводим пользователя в режим чата с AI
+    await state.set_state(AIConsultantStates.chatting)
+
+    await message.answer(
+        "🤖 AI консультант активирован!\n\n"
+        "Задавайте ваши вопросы, и я постараюсь помочь.\n"
+        "Для выхода из режима AI консультанта отправьте /start"
+    )
+
+
 # Обработчик для сообщений в режиме AI консультанта
 # ВАЖНО: Должен быть ДО fallback обработчика text_message_handler
 @dp.message(AIConsultantStates.chatting, F.text)
