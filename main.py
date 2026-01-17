@@ -22,6 +22,17 @@ from handlers import (
     video_review_router,
     contact_manager_router,
     links_router,
+    # Роутеры резиденций
+    residence_a_router,
+    residence_b_router,
+    residence_c_router,
+    residence_d_router,
+    residence_e_router,
+    residence_f_router,
+    residence_g_router,
+    residence_h_router,
+    residence_i_router,
+    residence_k_router,
 )
 
 # Загружаем переменные окружения
@@ -45,6 +56,17 @@ dp = Dispatcher(storage=MemoryStorage())
 dp.include_router(ai_consultant_router)
 dp.include_router(about_project_router)
 dp.include_router(catalog_router)
+# Подключаем роутеры резиденций
+dp.include_router(residence_a_router)
+dp.include_router(residence_b_router)
+dp.include_router(residence_c_router)
+dp.include_router(residence_d_router)
+dp.include_router(residence_e_router)
+dp.include_router(residence_f_router)
+dp.include_router(residence_g_router)
+dp.include_router(residence_h_router)
+dp.include_router(residence_i_router)
+dp.include_router(residence_k_router)
 dp.include_router(video_review_router)
 dp.include_router(contact_manager_router)
 dp.include_router(links_router)
