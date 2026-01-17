@@ -1,11 +1,14 @@
 import asyncio
 import logging
 import os
-from aiogram import Bot, Dispatcher, F
+from aiogram import Bot, Dispatcher
 from aiogram.filters import CommandStart
 from aiogram.types import Message
-import aiohttp
 from dotenv import load_dotenv
+
+# Импорт функций для работы с БД
+from database import close_db, get_session
+from crud import get_or_create_user
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -17,68 +20,62 @@ logger = logging.getLogger(__name__)
 # Токен бота
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# !!! ИСПРАВЛЕНИЕ 1: Убрали лишние пробелы в ссылке !!!
-WEBHOOK_URL = "https://investretail2026.app.n8n.cloud/webhook/rag_chat"
+# URL картинки для стартового сообщения
+START_IMAGE_URL = "https://optim.tildacdn.com/tild3535-3863-4331-b136-396632393536/-/format/webp/IMG_1358.png.webp"
 
 # Инициализация бота и диспетчера
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
 
 
-async def send_to_webhook(message_text: str, user_id: int) -> str:
-    """
-    Отправляет сообщение на webhook и возвращает ответ
-    """
-    try:
-        async with aiohttp.ClientSession() as session:
-            # Формируем JSON, который отправляем В n8n (это правильно)
-            payload = {
-                "message": message_text,
-                "user_id": user_id,
-                "chat_id": user_id  # Лучше добавить chat_id явно, n8n его любит
-            }
-
-            async with session.post(WEBHOOK_URL, json=payload) as response:
-                if response.status == 200:
-                    # !!! ИСПРАВЛЕНИЕ 2: Читаем ответ как ТЕКСТ, а не JSON !!!
-                    # Так как в n8n мы поставили "Respond With: Text"
-                    answer_text = await response.text()
-                    return answer_text
-                else:
-                    logger.error(f"Webhook returned status {response.status}")
-                    # Можно прочитать текст ошибки для отладки
-                    error_text = await response.text()
-                    logger.error(f"Server response: {error_text}")
-                    return "Извините, произошла ошибка на сервере обработки"
-    except Exception as e:
-        logger.error(f"Error sending to webhook: {e}")
-        return "Извините, не удалось связаться с сервером."
-
-
 @dp.message(CommandStart())
 async def command_start_handler(message: Message) -> None:
-    await message.answer("Добрый день! Готов Вам помочь!")
-
-
-@dp.message(F.text)
-async def message_handler(message: Message) -> None:
-    user_message = message.text
+    """
+    Обработчик команды /start
+    Сохраняет данные пользователя в БД и отправляет стартовое сообщение с картинкой
+    """
     user_id = message.from_user.id
 
-    # Показываем статус "печатает...", пока ждем ответ
-    await bot.send_chat_action(chat_id=message.chat.id, action="typing")
+    # Сохраняем/обновляем данные пользователя в базе данных
+    async for session in get_session():
+        user, created = await get_or_create_user(
+            session,
+            telegram_id=user_id,
+            username=message.from_user.username,
+            first_name=message.from_user.first_name,
+            last_name=message.from_user.last_name,
+        )
 
-    response = await send_to_webhook(user_message, user_id)
+        if created:
+            logger.info(
+                f"✅ Новый пользователь создан: "
+                f"ID={user.telegram_id}, "
+                f"username={user.username}, "
+                f"name={user.first_name} {user.last_name}"
+            )
+        else:
+            logger.info(
+                f"🔄 Пользователь обновлен: "
+                f"ID={user.telegram_id}, "
+                f"username={user.username}"
+            )
 
-    await message.answer(response)
+    # Отправляем картинку с текстом
+    await message.answer_photo(
+        photo=START_IMAGE_URL,
+        caption="Я виртуальный помощник. Выберете пункт меню"
+    )
 
 
 async def main():
-    logger.info("Бот запускается...")
+    logger.info("🚀 Бот запускается...")
+
     try:
         await dp.start_polling(bot)
     finally:
         await bot.session.close()
+        await close_db()
+        logger.info("🛑 Бот остановлен, соединение с БД закрыто")
 
 
 if __name__ == "__main__":

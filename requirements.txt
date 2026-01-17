@@ -6,6 +6,7 @@ aiogram==3.13.1
 # SQLAlchemy - ORM для работы с базами данных
 sqlalchemy==2.0.36
 
+
 # Дополнительные библиотеки
 aiosqlite==0.20.0  # Асинхронный драйвер для SQLite
 asyncpg==0.30.0  # Асинхронный драйвер для PostgreSQL
