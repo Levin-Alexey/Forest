@@ -1,7 +1,7 @@
 import asyncio
 import logging
 import os
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message
 from dotenv import load_dotenv
@@ -9,6 +9,17 @@ from dotenv import load_dotenv
 # Импорт функций для работы с БД
 from database import close_db, get_session
 from crud import get_or_create_user
+
+# Импорт клавиатур и обработчиков
+from keyboards import get_main_menu_keyboard
+from handlers import (
+    ai_consultant_router,
+    about_project_router,
+    catalog_router,
+    video_review_router,
+    contact_manager_router,
+    links_router,
+)
 
 # Загружаем переменные окружения
 load_dotenv()
@@ -26,6 +37,14 @@ START_IMAGE_URL = "https://optim.tildacdn.com/tild3535-3863-4331-b136-3966323935
 # Инициализация бота и диспетчера
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher()
+
+# Подключаем роутеры обработчиков
+dp.include_router(ai_consultant_router)
+dp.include_router(about_project_router)
+dp.include_router(catalog_router)
+dp.include_router(video_review_router)
+dp.include_router(contact_manager_router)
+dp.include_router(links_router)
 
 
 @dp.message(CommandStart())
@@ -60,10 +79,23 @@ async def command_start_handler(message: Message) -> None:
                 f"username={user.username}"
             )
 
-    # Отправляем картинку с текстом
+    # Отправляем картинку с текстом и inline-клавиатурой
     await message.answer_photo(
         photo=START_IMAGE_URL,
-        caption="Я виртуальный помощник. Выберете пункт меню"
+        caption="Я виртуальный помощник. Выберете пункт меню",
+        reply_markup=get_main_menu_keyboard()
+    )
+
+
+@dp.message(F.text)
+async def text_message_handler(message: Message) -> None:
+    """
+    Обработчик всех текстовых сообщений
+    Защита от сообщений в чат - направляем к использованию кнопок
+    """
+    await message.answer(
+        "💬 Для общения с AI консультантом перейдите в нужный раздел",
+        reply_markup=get_main_menu_keyboard()
     )
 
 
