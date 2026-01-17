@@ -91,7 +91,7 @@ async def command_start_handler(message: Message) -> None:
 async def text_message_handler(message: Message) -> None:
     """
     Обработчик всех текстовых сообщений
-    Защита от сообщений в чат - направляем к использованию кнопок
+    Защита от сообщений в чат  направляем к использованию кнопок
     """
     await message.answer(
         "💬 Для общения с AI консультантом перейдите в нужный раздел",
