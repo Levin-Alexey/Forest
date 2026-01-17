@@ -102,21 +102,3 @@ async def message_handler(message: Message) -> None:
     await message.answer(response)
 
 
-async def main():
-    logger.info("Бот запускается...")
-
-    # Инициализация базы данных (создание таблиц, если их нет)
-    # Раскомментируйте если база данных еще не создана
-    # await init_db()
-    # logger.info("База данных инициализирована")
-
-    try:
-        await dp.start_polling(bot)
-    finally:
-        await bot.session.close()
-        await close_db()
-        logger.info("Соединение с базой данных закрыто")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

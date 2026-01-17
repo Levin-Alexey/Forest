@@ -4,6 +4,8 @@ import os
 from aiogram import Bot, Dispatcher, F
 from aiogram.filters import CommandStart
 from aiogram.types import Message
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.fsm.context import FSMContext
 from dotenv import load_dotenv
 
 # Импорт функций для работы с БД
@@ -36,7 +38,7 @@ START_IMAGE_URL = "https://optim.tildacdn.com/tild3535-3863-4331-b136-3966323935
 
 # Инициализация бота и диспетчера
 bot = Bot(token=BOT_TOKEN)
-dp = Dispatcher()
+dp = Dispatcher(storage=MemoryStorage())
 
 # Подключаем роутеры обработчиков
 dp.include_router(ai_consultant_router)
@@ -48,11 +50,14 @@ dp.include_router(links_router)
 
 
 @dp.message(CommandStart())
-async def command_start_handler(message: Message) -> None:
+async def command_start_handler(message: Message, state: FSMContext) -> None:
     """
     Обработчик команды /start
     Сохраняет данные пользователя в БД и отправляет стартовое сообщение с картинкой
     """
+    # Сбрасываем состояние FSM (выход из режима AI консультанта)
+    await state.clear()
+
     user_id = message.from_user.id
 
     # Сохраняем/обновляем данные пользователя в базе данных
@@ -91,7 +96,7 @@ async def command_start_handler(message: Message) -> None:
 async def text_message_handler(message: Message) -> None:
     """
     Обработчик всех текстовых сообщений
-    Защита от сообщений в чат  направляем к использованию кнопок
+    Защита от сообщений в чат - направляем пользователя к использованию AI консультанта
     """
     await message.answer(
         "💬 Для общения с AI консультантом перейдите в нужный раздел",
