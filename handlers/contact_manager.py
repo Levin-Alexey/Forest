@@ -1,12 +1,14 @@
 """
 Обработчик: Связаться с менеджером
 """
+import logging
 from aiogram import Router, F, Bot
 from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
+logger = logging.getLogger(__name__)
 router = Router()
 
 # ID закрытой группы для уведомлений
@@ -78,6 +80,7 @@ async def contact_manager_callback_handler(callback: CallbackQuery, state: FSMCo
     Обработчик кнопки "Связаться с менеджером"
     Предлагает пользователю написать свой вопрос
     """
+    logger.info(f"✅ contact_manager callback получен от пользователя {callback.from_user.id}")
     await callback.answer()
     await start_contact_manager(callback.message, state)
 
