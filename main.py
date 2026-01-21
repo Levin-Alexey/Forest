@@ -170,6 +170,8 @@ dp.include_router(k_description_router)
 dp.include_router(k_photo_gallery_router)
 dp.include_router(video_review_router)
 dp.include_router(links_router)
+# Подключаем fallback роутер ПОСЛЕДНИМ!
+dp.include_router(fallback_router)
 
 
 @dp.message(CommandStart())
@@ -252,9 +254,13 @@ async def ai_chat_handler(message: Message) -> None:
     await message.answer(response)
 
 
-# ВАЖНО: Этот обработчик должен быть ПОСЛЕДНИМ!
+# Создаем отдельный роутер для fallback обработчиков
+fallback_router = Router()
+
+
+# ВАЖНО: Этот обработчик должен быть ПОСЛЕДНИМ в fallback_router!
 # Он ловит только сообщения БЕЗ активного FSM состояния
-@dp.message(F.text)
+@fallback_router.message(F.text)
 async def text_message_handler(message: Message, state: FSMContext) -> None:
     """
     Обработчик всех текстовых сообщений (fallback)
