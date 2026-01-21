@@ -106,6 +106,9 @@ dp = Dispatcher(storage=MemoryStorage())
 dp.include_router(ai_consultant_router)
 dp.include_router(about_project_router)
 dp.include_router(catalog_router)
+dp.include_router(contact_manager_router)
+dp.include_router(video_review_router)
+dp.include_router(links_router)
 # Подключаем роутеры резиденций
 dp.include_router(residence_a_router)
 dp.include_router(residence_b_router)
@@ -255,7 +258,7 @@ async def ai_chat_handler(message: Message) -> None:
 # ВАЖНО: Этот обработчик должен быть ПОСЛЕДНИМ!
 # Он ловит только сообщения БЕЗ активного FSM состояния
 @dp.message(F.text)
-async def text_message_handler(message: Message) -> None:
+async def text_message_handler(message: Message, state: FSMContext) -> None:
     """
     Обработчик всех текстовых сообщений (fallback)
     Защита от сообщений в чат - направляем пользователя к использованию AI консультанта
@@ -265,6 +268,13 @@ async def text_message_handler(message: Message) -> None:
     - Пользователь НЕ заполняет другую форму
     - Нет других более специфичных обработчиков
     """
+    # Проверяем, что пользователь не в активном состоянии
+    current_state = await state.get_state()
+    if current_state is not None:
+        # Если есть активное состояние - игнорируем этот обработчик
+        # Пусть обработает более специфичный обработчик
+        return
+    
     await message.answer(
         "💬 Для общения с AI консультантом перейдите в нужный раздел",
         reply_markup=get_main_menu_keyboard()
