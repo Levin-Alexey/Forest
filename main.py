@@ -102,6 +102,9 @@ START_IMAGE_URL = "https://optim.tildacdn.com/tild3535-3863-4331-b136-3966323935
 bot = Bot(token=BOT_TOKEN)
 dp = Dispatcher(storage=MemoryStorage())
 
+# Создаем fallback роутер для общих сообщений
+fallback_router = Router()
+
 # Подключаем роутеры обработчиков (ВАЖНО: ai_consultant_router первым!)
 dp.include_router(ai_consultant_router)
 dp.include_router(about_project_router)
@@ -254,8 +257,6 @@ async def ai_chat_handler(message: Message) -> None:
     await message.answer(response)
 
 
-# Создаем отдельный роутер для fallback обработчиков
-fallback_router = Router()
 
 
 # ВАЖНО: Этот обработчик должен быть ПОСЛЕДНИМ в fallback_router!
