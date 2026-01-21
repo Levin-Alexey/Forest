@@ -66,12 +66,18 @@ async def start_contact_manager(message_or_callback, state: FSMContext):
     """
     Общая логика для запуска режима связи с менеджером
     """
-    await state.set_state(ContactManagerStates.waiting_for_question)
-    await message_or_callback.answer(
-        "💬 <b>Связь с менеджером</b>\n\n"
-        "Напишите ваш вопрос, и мы свяжемся с вами как можно скорее",
-        reply_markup=get_cancel_keyboard()
-    )
+    try:
+        logger.info(f"🔄 Устанавливаю состояние waiting_for_question")
+        await state.set_state(ContactManagerStates.waiting_for_question)
+        logger.info(f"✅ Состояние установлено, отправляю сообщение")
+        await message_or_callback.answer(
+            "💬 <b>Связь с менеджером</b>\n\n"
+            "Напишите ваш вопрос, и мы свяжемся с вами как можно скорее",
+            reply_markup=get_cancel_keyboard()
+        )
+        logger.info(f"✅ Сообщение отправлено")
+    except Exception as e:
+        logger.error(f"❌ Ошибка в start_contact_manager: {e}", exc_info=True)
 
 
 @router.callback_query(lambda c: c.data == "contact_manager")
@@ -111,6 +117,7 @@ async def question_received_handler(message: Message, state: FSMContext):
     """
     Обработчик получения вопроса от пользователя
     """
+    logger.info(f"📩 Получено сообщение в состоянии waiting_for_question: {message.text[:50]}")
     question = message.text
     user_id = message.from_user.id
     username = message.from_user.username
