@@ -169,7 +169,6 @@ dp.include_router(k_planning_router)
 dp.include_router(k_description_router)
 dp.include_router(k_photo_gallery_router)
 dp.include_router(video_review_router)
-dp.include_router(contact_manager_router)
 dp.include_router(links_router)
 
 
