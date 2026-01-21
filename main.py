@@ -107,8 +107,6 @@ dp.include_router(ai_consultant_router)
 dp.include_router(about_project_router)
 dp.include_router(catalog_router)
 dp.include_router(contact_manager_router)
-dp.include_router(video_review_router)
-dp.include_router(links_router)
 # Подключаем роутеры резиденций
 dp.include_router(residence_a_router)
 dp.include_router(residence_b_router)
