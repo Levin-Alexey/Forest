@@ -280,7 +280,7 @@ async def text_message_handler(message: Message, state: FSMContext) -> None:
         return
     
     await message.answer(
-        "💬 Для общения с AI консультантом перейдите в нужный раздел",
+        "💬 Для общения с AI консультантом перейдите в нужный Вам раздел",
         reply_markup=get_main_menu_keyboard()
     )
 
