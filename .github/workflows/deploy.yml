@@ -1,0 +1,38 @@
+name: Deploy to VDS
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:  # Можно запустить вручную
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd ${{ secrets.PROJECT_PATH }}
+            
+            # Обновляем код
+            git pull origin main
+            
+            # Активируем venv и обновляем зависимости (если изменились)
+            source venv/bin/activate
+            pip install -r requirements.txt --quiet
+            
+            # Перезапускаем сервис
+            sudo systemctl restart ${{ secrets.SERVICE_NAME }}
+            
+            # Проверяем статус
+            sleep 2
+            sudo systemctl status ${{ secrets.SERVICE_NAME }} --no-pager
+            
+            echo "✅ Deployment completed!"
