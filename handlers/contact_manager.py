@@ -7,6 +7,8 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from crud import update_user_phone
+from database import get_session
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -17,13 +19,14 @@ NOTIFICATION_GROUP_ID = -5273547916
 
 class ContactManagerStates(StatesGroup):
     """Состояния для связи с менеджером"""
-    waiting_for_question = State()
+    waiting_for_phone = State()
 
 
-def get_cancel_keyboard() -> ReplyKeyboardMarkup:
-    """Клавиатура с кнопкой отмены"""
+def get_phone_keyboard() -> ReplyKeyboardMarkup:
+    """Клавиатура для передачи номера телефона"""
     return ReplyKeyboardMarkup(
         keyboard=[
+            [KeyboardButton(text="📱 Передать номер телефона", request_contact=True)],
             [KeyboardButton(text="❌ Отменить")]
         ],
         resize_keyboard=True,
@@ -31,35 +34,24 @@ def get_cancel_keyboard() -> ReplyKeyboardMarkup:
     )
 
 
-async def send_question_to_group(bot: Bot, user_id: int, username: str, question: str):
-    """
-    Отправка вопроса пользователя в закрытую группу
-    
-    Args:
-        bot: Экземпляр бота
-        user_id: Telegram ID пользователя
-        username: Username пользователя (если есть)
-        question: Вопрос пользователя
-    """
+async def send_contact_to_group(bot: Bot, user_id: int, username: str, phone: str):
+    """Отправка контакта пользователя в закрытую группу"""
     try:
-        # Формируем сообщение
         user_link = f"@{username}" if username else f"ID: {user_id}"
         message_text = (
-            "❓ <b>Новый вопрос от пользователя</b>\n\n"
-            f"👤 От: {user_link}\n"
-            f"🆔 User ID: <code>{user_id}</code>\n\n"
-            f"💬 Вопрос:\n<code>{question}</code>"
+            "☎️ <b>Новый запрос связи с менеджером</b>\n\n"
+            f"👤 Пользователь: {user_link}\n"
+            f"📱 Телефон: <code>{phone}</code>\n"
+            f"🆔 User ID: <code>{user_id}</code>"
         )
-        
-        # Отправляем сообщение в группу
+
         await bot.send_message(
             chat_id=NOTIFICATION_GROUP_ID,
             text=message_text,
             parse_mode="HTML"
         )
     except Exception as e:
-        # Логируем ошибку, но не прерываем работу бота
-        print(f"Ошибка при отправке вопроса в группу: {e}")
+        print(f"Ошибка при отправке контакта в группу: {e}")
 
 
 async def start_contact_manager(message_or_callback, state: FSMContext):
@@ -67,13 +59,14 @@ async def start_contact_manager(message_or_callback, state: FSMContext):
     Общая логика для запуска режима связи с менеджером
     """
     try:
-        logger.info(f"🔄 Устанавливаю состояние waiting_for_question")
-        await state.set_state(ContactManagerStates.waiting_for_question)
+        logger.info(f"🔄 Устанавливаю состояние waiting_for_phone")
+        await state.set_state(ContactManagerStates.waiting_for_phone)
         logger.info(f"✅ Состояние установлено, отправляю сообщение")
         await message_or_callback.answer(
             "💬 <b>Связь с менеджером</b>\n\n"
-            "Напишите ваш вопрос, и мы свяжемся с вами как можно скорее",
-            reply_markup=get_cancel_keyboard()
+            "Живое общение - лучший способ узнать все детали. Наш менеджер уже готов ответить на ваши вопросы по телефону или подобрать удобное время для встречи на объекте.\n\n"
+            "Оставьте ваш номер, и мы свяжемся с вами в ближайшее время! 📞",
+            reply_markup=get_phone_keyboard()
         )
         logger.info(f"✅ Сообщение отправлено")
     except Exception as e:
@@ -84,7 +77,7 @@ async def start_contact_manager(message_or_callback, state: FSMContext):
 async def contact_manager_callback_handler(callback: CallbackQuery, state: FSMContext):
     """
     Обработчик кнопки "Связаться с менеджером"
-    Предлагает пользователю написать свой вопрос
+    Предлагает пользователю запросить звонок и передать номер телефона
     """
     logger.info(f"✅ contact_manager callback получен от пользователя {callback.from_user.id}")
     await callback.answer()
@@ -95,43 +88,48 @@ async def contact_manager_callback_handler(callback: CallbackQuery, state: FSMCo
 async def contact_manager_command_handler(message: Message, state: FSMContext):
     """
     Обработчик команды /manager
-    Предлагает пользователю написать свой вопрос
+    Предлагает пользователю запросить звонок и передать номер телефона
     """
     await start_contact_manager(message, state)
 
 
-@router.message(ContactManagerStates.waiting_for_question, F.text == "❌ Отменить")
+@router.message(ContactManagerStates.waiting_for_phone, F.text == "❌ Отменить")
 async def cancel_contact_manager_handler(message: Message, state: FSMContext):
     """
-    Обработчик отмены отправки вопроса
+    Обработчик отмены передачи номера
     """
     await state.clear()
     await message.answer(
-        "❌ Отправка вопроса отменена",
+        "❌ Передача номера отменена",
         reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True)
     )
 
 
-@router.message(ContactManagerStates.waiting_for_question, F.text)
-async def question_received_handler(message: Message, state: FSMContext):
-    """
-    Обработчик получения вопроса от пользователя
-    """
-    logger.info(f"📩 Получено сообщение в состоянии waiting_for_question: {message.text[:50]}")
-    question = message.text
+@router.message(ContactManagerStates.waiting_for_phone, F.contact)
+async def contact_received_handler(message: Message, state: FSMContext):
+    """Обрабатывает получение контакта с номером телефона"""
+    phone = message.contact.phone_number
     user_id = message.from_user.id
     username = message.from_user.username
 
-    # Отправляем вопрос в закрытую группу
+    async for session in get_session():
+        await update_user_phone(session, user_id, phone)
+
     bot = message.bot
-    await send_question_to_group(bot, user_id, username, question)
+    await send_contact_to_group(bot, user_id, username, phone)
 
-    # Сбрасываем состояние
     await state.clear()
-
-    # Подтверждаем пользователю
     await message.answer(
-        "✅ Спасибо за вопрос!\n\n"
+        f"✅ Спасибо! Номер телефона сохранен: {phone}\n\n"
         "Наш менеджер свяжется с вами в ближайшее время",
         reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True)
+    )
+
+
+@router.message(ContactManagerStates.waiting_for_phone, F.text)
+async def phone_request_repeat_handler(message: Message):
+    """Просим пользователя отправить номер через кнопку"""
+    await message.answer(
+        "Пожалуйста, нажмите кнопку ниже, чтобы передать номер телефона",
+        reply_markup=get_phone_keyboard()
     )
