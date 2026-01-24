@@ -7,7 +7,7 @@ from aiogram.filters import Command
 from aiogram.types import CallbackQuery, Message, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from crud import update_user_phone
+from crud import update_user_phone, get_user
 from database import get_session
 
 logger = logging.getLogger(__name__)
@@ -59,11 +59,24 @@ async def start_contact_manager(message_or_callback, state: FSMContext):
     Общая логика для запуска режима связи с менеджером
     """
     try:
+        user_id = message_or_callback.from_user.id
+
+        async for session in get_session():
+            user = await get_user(session, user_id)
+            if user and user.phone:
+                await state.clear()
+                await message_or_callback.answer(
+                    f"✅ Номер телефона уже сохранен: {user.phone}\n\n"
+                    "Наш менеджер свяжется с вами в ближайшее время",
+                    reply_markup=ReplyKeyboardMarkup(keyboard=[[]], resize_keyboard=True)
+                )
+                return
+
         logger.info(f"🔄 Устанавливаю состояние waiting_for_phone")
         await state.set_state(ContactManagerStates.waiting_for_phone)
         logger.info(f"✅ Состояние установлено, отправляю сообщение")
         await message_or_callback.answer(
-            "💬 <b>Связь с менеджером</b>\n\n"
+            "💬 Связь с менеджером\n\n"
             "Живое общение - лучший способ узнать все детали. Наш менеджер уже готов ответить на ваши вопросы по телефону или подобрать удобное время для встречи на объекте.\n\n"
             "Оставьте ваш номер, и мы свяжемся с вами в ближайшее время! 📞",
             reply_markup=get_phone_keyboard()
