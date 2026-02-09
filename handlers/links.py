@@ -2,7 +2,11 @@
 Обработчик: Сайт / Группа TG
 """
 from aiogram import Router
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (
+    CallbackQuery,
+    InlineKeyboardMarkup,
+    InlineKeyboardButton,
+)
 
 router = Router()
 
@@ -13,12 +17,25 @@ async def links_handler(callback: CallbackQuery):
     Обработчик кнопки "Сайт / Группа TG"
     """
     await callback.answer()
+
+    if not callback.message:
+        return
     
     # Создаем клавиатуру с кнопками-ссылками
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            [InlineKeyboardButton(text="🌐 Наш сайт", url="https://pisateli-forest.ru/")],
-            [InlineKeyboardButton(text="📱 Наша группа в ТГ", url="https://pisateli-forest.ru/")],
+            [
+                InlineKeyboardButton(
+                    text="🌐 Наш сайт",
+                    url="https://pisateli-forest.ru/",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="📱 Наша группа в ТГ",
+                    url="https://t.me/pisateli_forest",
+                )
+            ],
         ]
     )
     
@@ -28,5 +45,5 @@ async def links_handler(callback: CallbackQuery):
         "🏗 <b>Telegram</b> - жизнь стройки в реальном времени, новости и наш лайфстайл.\n\n"
         "Будьте в курсе всех событий!",
         parse_mode="HTML",
-        reply_markup=keyboard
+        reply_markup=keyboard,
     )

@@ -39,9 +39,8 @@ async def g_back_to_catalog_handler(callback: CallbackQuery, state: FSMContext):
 
     # Отправляем каталог с кнопками резиденций
     await callback.message.answer(
-        "🏢 <b>Каталог резиденций</b>\n\n"
-        "Тут будет описание\n\n"
-        "Выберите интересующую вас резиденцию:",
+        "🏢 Каталог резиденций\n\n"
+        "Выберите интересующую Вас резиденцию:",
         reply_markup=get_catalog_keyboard()
     )
 

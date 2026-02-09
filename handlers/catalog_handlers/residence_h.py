@@ -33,9 +33,8 @@ async def h_back_to_catalog_handler(callback: CallbackQuery, state: FSMContext):
     await state.clear()
     from .keyboards import get_catalog_keyboard
     await callback.message.answer(
-        "🏢 <b>Каталог резиденций</b>\n\n"
-        "Тут будет описание\n\n"
-        "Выберите интересующую вас резиденцию:",
+        "🏢 Каталог резиденций\n\n"
+        "Выберите интересующую Вас резиденцию:",
         reply_markup=get_catalog_keyboard()
     )
 
