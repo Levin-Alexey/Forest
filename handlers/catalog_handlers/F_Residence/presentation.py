@@ -80,6 +80,10 @@ async def f_presentation_handler(callback: CallbackQuery, state: FSMContext):
 
         # Если номер телефона уже есть - отправляем ссылку
         if user and user.phone:
+            await callback.message.answer_document(
+                PRESENTATION_URL,
+                caption="PDF файл презентации"
+            )
             await callback.message.answer(
                 f"✅ Номер телефона найден: {user.phone}\n\n"
                 f"📄 Вот ссылка на презентацию резиденции:\n"
@@ -117,6 +121,10 @@ async def contact_received_handler(message: Message, state: FSMContext):
     await state.clear()
 
     # Отправляем ссылку на презентацию
+    await message.answer_document(
+        PRESENTATION_URL,
+        caption="PDF файл презентации"
+    )
     await message.answer(
         f"✅ Спасибо! Номер телефона сохранен: {phone}\n\n"
         f"📄 Вот ссылка на презентацию резиденции:\n"
